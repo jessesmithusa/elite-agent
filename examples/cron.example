@@ -1,0 +1,12 @@
+# elite-agent crontab example
+#
+# Runs the poll/process/reply cycle every 5 minutes, and prints a digest of
+# pending drafts once a day at 07:00. Copy the lines you want into
+# `crontab -e`, then edit the path and --env/--profile flags for your
+# deployment.
+#
+# Poll every 5 minutes:
+# */5 * * * * cd /path/to/elite_agent && python3 -m elite_agent run --env .env >> /var/log/elite_agent/run.log 2>&1
+#
+# Daily digest of pending drafts at 07:00:
+# 0 7 * * * cd /path/to/elite_agent && python3 -m elite_agent digest --env .env >> /var/log/elite_agent/digest.log 2>&1
