@@ -1,0 +1,9 @@
+From: Newsletter <news@example.org>
+To: Bob Example <bob@example.org>
+Subject: Weekly digest
+Date: Mon, 1 Jan 2026 09:25:00 -0500
+Precedence: bulk
+List-Unsubscribe: <mailto:unsubscribe@example.org>
+Content-Type: text/plain; charset="utf-8"
+
+Here is your weekly digest of updates.

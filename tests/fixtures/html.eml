@@ -1,0 +1,16 @@
+From: Alice Example <alice@example.com>
+To: Bob Example <bob@example.org>
+Subject: Newsletter update
+Date: Mon, 1 Jan 2026 09:05:00 -0500
+Content-Type: text/html; charset="utf-8"
+
+<html>
+<head>
+<style>body { color: red; }</style>
+<script>alert('should be stripped entirely');</script>
+</head>
+<body>
+<p>Hello Bob,</p>
+<p>Here is our <b>monthly update</b>. Nothing urgent.</p>
+</body>
+</html>

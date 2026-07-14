@@ -1,0 +1,8 @@
+From: Spoofed Sender <spoof@example.com>
+To: Bob Example <bob@example.org>
+Subject: Account notice
+Date: Mon, 1 Jan 2026 09:20:00 -0500
+Authentication-Results: mx.example.org; dmarc=fail (p=reject) header.from=example.com
+Content-Type: text/plain; charset="utf-8"
+
+This is a routine notice.
