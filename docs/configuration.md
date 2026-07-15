@@ -111,3 +111,10 @@ Process environment variables override all files:
 ```bash
 IMAP_HOST=imap.example.com python3 -m elite_agent run
 ```
+## High-volume unread inboxes
+
+The agent processes unseen mail in bounded, resumable batches. `EA_MAX_MESSAGES_PER_RUN`
+limits messages per invocation, while `EA_MAX_UID_SCAN` limits the IMAP scan window.
+The cursor rotates through UIDs between runs so an older unread backlog is not
+starved by newer arrivals. `EA_MAX_LLM_CALLS_PER_RUN` caps model calls; messages
+that exceed the budget remain unread and are audited as deferred for the next run.

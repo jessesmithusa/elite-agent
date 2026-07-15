@@ -60,3 +60,7 @@ advice.
 ## License
 
 MIT
+For large unread backlogs, runs are bounded and resumable: the agent rotates
+through unseen UIDs, persists its cursor, and stops at `EA_MAX_MESSAGES_PER_RUN`.
+Set `EA_MAX_LLM_CALLS_PER_RUN` to cap model spend; deferred messages remain
+unread and are retried on a later run.

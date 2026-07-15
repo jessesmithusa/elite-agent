@@ -113,6 +113,8 @@ class Config:
     openai_timeout_sec: int
     interpret_max_tokens: int
     draft_max_tokens: int
+    # Optional budget; kept last with a default for backwards-compatible Config construction.
+    max_llm_calls_per_run: int = 20
 
     def __repr__(self) -> str:
         """Return repr with sensitive fields masked."""
@@ -189,6 +191,7 @@ def load_config(
         "min_llm_confidence": 0.6,
         "max_messages_per_run": 10,
         "max_uid_scan": 200,
+        "max_llm_calls_per_run": 20,
         "max_email_chars": 8000,
         "max_sends_per_hour": 10,
         "state_file": "./state/state.json",
@@ -245,6 +248,7 @@ def load_config(
         "EA_MIN_LLM_CONFIDENCE": "min_llm_confidence",
         "EA_MAX_MESSAGES_PER_RUN": "max_messages_per_run",
         "EA_MAX_UID_SCAN": "max_uid_scan",
+        "EA_MAX_LLM_CALLS_PER_RUN": "max_llm_calls_per_run",
         "EA_MAX_EMAIL_CHARS": "max_email_chars",
         "EA_MAX_SENDS_PER_HOUR": "max_sends_per_hour",
         "EA_STATE_FILE": "state_file",
@@ -285,6 +289,7 @@ def load_config(
         str(config_dict["max_messages_per_run"])
     )
     config_dict["max_uid_scan"] = _to_int(str(config_dict["max_uid_scan"]))
+    config_dict["max_llm_calls_per_run"] = _to_int(str(config_dict["max_llm_calls_per_run"]))
     config_dict["max_email_chars"] = _to_int(str(config_dict["max_email_chars"]))
     config_dict["max_sends_per_hour"] = _to_int(str(config_dict["max_sends_per_hour"]))
     config_dict["openai_timeout_sec"] = _to_int(str(config_dict["openai_timeout_sec"]))

@@ -75,6 +75,17 @@ def _mark_processed(state: Dict[str, Any], dedupe_key: str, uid_str: str) -> Non
     state.setdefault("processed_uids", []).append(uid_str)
 
 
+def _rotated_batch(uids: List[bytes], state: Dict[str, Any], limit: int) -> List[bytes]:
+    """Return a fair, bounded slice so an old unread backlog is not starved."""
+    if not uids:
+        return []
+    ordered = sorted(uids, key=lambda value: int(value))
+    cursor = int(state.get("unseen_cursor_uid", 0) or 0)
+    start = next((i for i, uid in enumerate(ordered) if int(uid) > cursor), 0)
+    batch = (ordered[start:] + ordered[:start])
+    return batch if limit <= 0 else batch[:limit]
+
+
 def process_one_message(
     cfg: Config,
     imap: ImapClient,
@@ -230,6 +241,7 @@ def run_once(cfg: Config) -> Dict[str, Any]:
     state_path = Path(cfg.state_file)
     state = load_state(state_path)
     counts: Dict[str, int] = {}
+    llm_calls = 0
 
     imap = ImapClient(cfg)
     try:
@@ -239,14 +251,24 @@ def run_once(cfg: Config) -> Dict[str, Any]:
 
         uids = imap.targeted_unseen_uids(cfg.target_address)
         if cfg.max_uid_scan > 0:
-            uids = uids[-cfg.max_uid_scan :]
+            uids = _rotated_batch(uids, state, cfg.max_uid_scan)
+        else:
+            uids = _rotated_batch(uids, state, 0)
         if cfg.max_messages_per_run > 0:
             uids = uids[: cfg.max_messages_per_run]
 
         for uid in uids:
             uid_str = uid.decode("utf-8") if isinstance(uid, bytes) else str(uid)
             try:
+                if llm_calls + 2 > cfg.max_llm_calls_per_run > 0:
+                    uid_str = uid.decode("utf-8") if isinstance(uid, bytes) else str(uid)
+                    append_audit(Path(cfg.audit_file), {"event": "deferred", "uid": uid_str, "reason": "llm_budget"})
+                    counts["deferred"] = counts.get("deferred", 0) + 1
+                    state["unseen_cursor_uid"] = int(uid_str)
+                    continue
                 outcome = process_one_message(cfg, imap, state, uid, brain)
+                if outcome not in {"skip_seen", "skip_autoreply", "discard_attack"}:
+                    llm_calls += 2
             except Exception as exc:  # noqa: BLE001 - keep the run alive across bad messages
                 outcome = "error"
                 logger.exception("Error processing uid=%s", uid_str)
@@ -255,6 +277,7 @@ def run_once(cfg: Config) -> Dict[str, Any]:
                     {"event": "error", "uid": uid_str, "reason": str(exc)},
                 )
             counts[outcome] = counts.get(outcome, 0) + 1
+            state["unseen_cursor_uid"] = int(uid_str)
     finally:
         imap.close()
 

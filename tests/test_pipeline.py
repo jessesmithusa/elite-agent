@@ -203,6 +203,26 @@ def test_run_once_dry_run_drafts_avoidance_email(tmp_path):
     assert "<avoid1@example.com>" in state["processed_message_ids"]
 
 
+def test_rotated_batch_fairly_resumes_unread_backlog():
+    assert [u.decode() for u in pipeline._rotated_batch([b"1", b"2", b"3"], {}, 2)] == ["1", "2"]
+    assert [u.decode() for u in pipeline._rotated_batch([b"1", b"2", b"3"], {"unseen_cursor_uid": 2}, 2)] == ["3", "1"]
+
+
+def test_run_once_defers_when_llm_budget_is_exhausted(tmp_path):
+    cfg = make_cfg(tmp_path, EA_MAX_LLM_CALLS_PER_RUN="1")
+    fake_imap = FakeIMAP()
+    wire_fake_imap(fake_imap, cfg, "303", build_message(
+        sender="Alice Example <alice@example.com>", to=cfg.target_address,
+        subject="Question", body="Can you help?", message_id="<budget@example.com>"
+    ))
+    with patch("imaplib.IMAP4_SSL", return_value=fake_imap):
+        summary = pipeline.run_once(cfg)
+    assert summary["counts"] == {"deferred": 1}
+    assert "\\Seen" not in fake_imap.get_stored_flags("303")
+    state = json.loads(Path(cfg.state_file).read_text())
+    assert state["unseen_cursor_uid"] == 303
+
+
 # --- Test 2: injection fixture -> discard_attack, no LLM call --------------
 
 
